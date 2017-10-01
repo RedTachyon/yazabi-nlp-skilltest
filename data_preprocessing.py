@@ -29,36 +29,72 @@
 from __future__ import print_function
 from __future__ import generators
 from __future__ import division
-
+import os, sys
+from tqdm import tqdm
+import numpy as np
 # useful packages
 import nltk
 import gensim
 import sklearn
 
 
-def load_imdb_data(one_hot_labels=True):
-    """Load the imdb review data
-    The data can be downloaded here: http://ai.stanford.edu/~amaas/data/sentiment/
-
-    params:
-    :one_hot_labels: if True, encode labels in one-hot format.
-
-    returns: X_train, X_test, y_train, y_test
+def load_imdb_data():
     """
-    pass
+    Load the IMDB data.
+
+    Returns:
+        train_data, test_data: lists of reviews (strings)
+        train_labels, test_labels: arrays of binary labels
+    """
+    pos_path = [os.path.join('aclImdb', 'train', 'pos', pth) for pth in os.listdir('aclImdb/train/pos')]
+    neg_path = [os.path.join('aclImdb', 'train', 'neg', pth) for pth in os.listdir('aclImdb/train/neg')]
+
+    test_pos_path = [os.path.join('aclImdb', 'test', 'pos', pth) for pth in os.listdir('aclImdb/test/pos')]
+    test_neg_path = [os.path.join('aclImdb', 'test', 'neg', pth) for pth in os.listdir('aclImdb/test/neg')]
+
+    pos_data = []
+    for path in tqdm(pos_path):
+        with open(path, 'r') as f:
+            data = f.read()
+            pos_data.append(data)
+
+    neg_data = []
+    for path in tqdm(neg_path):
+        with open(path, 'r') as f:
+            data = f.read()
+            neg_data.append(data)
+
+    test_pos_data = []
+    for path in tqdm(test_pos_path):
+        with open(path, 'r') as f:
+            data = f.read()
+            test_pos_data.append(data)
+
+    test_neg_data = []
+    for path in tqdm(test_neg_path):
+        with open(path, 'r') as f:
+            data = f.read()
+            test_neg_data.append(data)
+
+    train_labels = np.hstack((np.ones([len(pos_data)]), np.zeros([len(neg_data)])))
+    test_labels = np.hstack((np.ones([len(test_pos_data)]), np.zeros([len(test_neg_data)])))
+
+    return pos_data + neg_data, test_pos_data + test_neg_data, train_labels, test_labels
 
 
 def tokenize(text):
     """Tokenize and filter a text sample.
     Hint: nltk
 
-    params:
-    :text: string to be tokenized and filtered.
+    Args:
+        text: string to be tokenized and filtered.
 
-    returns:
-    :tokens: a list of the tokens/words in text.
+    Returns:
+        tokens: a list of the tokens/words in text.
     """
-    pass
+    tokenizer = nltk.tokenize.RegexpTokenizer(r'\w+')
+    return tokenizer.tokenize(text.lower())
+
 
 
 def make_embedding_matrix(texts, size):
@@ -72,7 +108,9 @@ def make_embedding_matrix(texts, size):
     returns:
     :embedding_matrix: a dictionary mapping words to word-vectors (embeddings).
     """
-    pass
+    token_texts = list(map(tokenize, texts))
+    model = gensim.models.word2vec.Word2Vec(sentences=token_train_data, size=size)
+    return model
 
 
 def load_embedding_matrix(filepath):
@@ -82,7 +120,7 @@ def load_embedding_matrix(filepath):
     returns:
     :embedding_matrix: a dictionary mapping words to word-vectors (embeddings).
     """
-    pass
+    return gensim.models.word2vec.Word2Vec.load('filepath')
 
 
 def to_word_vectors(tokenized_samples, embedding_matrix, max_seq_length):
@@ -92,7 +130,7 @@ def to_word_vectors(tokenized_samples, embedding_matrix, max_seq_length):
     :tokenized_samples: a list of tokenized text samples.
     :embedding_matrix: a dictionary mapping words to word-vectors.
     :max_seq_length: the maximum word-length of the samples.
-=
+
     returns: a matrix containing the word-vectors of the samples with size:
     (num_samples, max_seq_length, word_vector_size).
     """
