@@ -60,8 +60,9 @@ class ClassifierTemplate(object):
         """Initialize the classifier with an (optional) embedding_matrix
         and/or any other parameters."""
         self.embedding_matrix = embedding_matrix
+        self._build()
 
-    def build(self, model_parameters=None):
+    def _build(self, model_parameters=None):
         """Build the model/graph."""
         raise NotImplementedError
 
@@ -85,13 +86,13 @@ class ClassifierTemplate(object):
         raise NotImplementedError
 
 
-# noinspection PyAttributeOutsideInit
 class LSATextClassifier(ClassifierTemplate):
 
     def __init__(self, embedding_matrix=None):
         super().__init__(embedding_matrix)
+        self._build()
 
-    def build(self, model_parameters=None):
+    def _build(self, model_parameters=None):
         """Build the model."""
         self.vectorizer = TfidfVectorizer(max_df=0.5, max_features=10000, min_df=2, use_idf=True, stop_words='english')
         self.lsa = make_pipeline(TruncatedSVD(100), Normalizer(copy=False))

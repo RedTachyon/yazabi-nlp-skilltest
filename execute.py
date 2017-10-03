@@ -59,21 +59,18 @@ if __name__ == "__main__":
     # build and train model
     if use_model == 'LSATextClassifier':
         model = LSATextClassifier()
-        model.build()
         model.train(X_train, y_train)
 
     elif use_model == "TextRNN":
         embd_matrix = dp.make_embedding_matrix(X_train + X_test, size=EMBEDDING_SIZE)
         # embd_matrix = dp.load_embedding_matrix(FILENAME)
         model = RNNTextClassifier()
-        model.build()
         model.train(X_train, y_train, BATCH_SIZE, NUM_EPOCHS)
 
     elif use_model == 'TextCNN':
         embd_matrix = dp.make_embedding_matrix(X_train + X_test, size=EMBEDDING_SIZE)
         # embd_matrix = dp.load_embedding_matrix(FILENAME)
         model = CNNTextClassifier()
-        model.build()
         model.train(X_train, y_train, BATCH_SIZE, NUM_EPOCHS)
 
     else:
