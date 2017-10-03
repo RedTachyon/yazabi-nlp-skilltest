@@ -1,3 +1,5 @@
+#!/bin/python3
+
 # Copyright (c) 2017 Yazabi Predictive Inc.
 
 #################################### MIT License ####################################
@@ -32,7 +34,7 @@ from __future__ import division
 
 import sys
 import data_preprocessing as dp
-# from models import LSATextClassifier
+from models import LSATextClassifier
 # from models import CNNTextClassifier
 # from models import RNNTextClassifier
 
@@ -50,7 +52,9 @@ if __name__ == "__main__":
         sys.exit()
 
     # load data
+    print("Loading data (this might take ~4 minutes)")
     X_train, X_test, y_train, y_test = dp.load_imdb_data()
+    X_train, X_test = dp.clean_data(X_train), dp.clean_data(X_test)
 
     # build and train model
     if use_model == 'LSATextClassifier':

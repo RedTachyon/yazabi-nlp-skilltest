@@ -96,6 +96,13 @@ def tokenize(text):
     return tokenizer.tokenize(text.lower())
 
 
+def clean_data(data):
+    """
+    Clean the data to remove punctuation etc.
+    """
+    token_data = list(map(tokenize, data))
+    return list(map(lambda x: ' '.join(x), token_data))
+
 
 def make_embedding_matrix(texts, size):
     """Create an embedding matrix from a list of text samples.

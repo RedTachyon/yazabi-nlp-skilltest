@@ -36,10 +36,11 @@ import data_preprocessing as dp
 
 
 ## recommended for LSATextClassifier
-# from sklearn.feature_extraction.text import TfidfVectorizer
-# from sklearn.decomposition import TruncatedSVD
-# from sklearn.preprocessing import Normalizer
-# from sklearn.linear_model import LogisticRegression
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.decomposition import TruncatedSVD
+from sklearn.preprocessing import Normalizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import make_pipeline
 
 ## recommended for LSTMTextClassifier
 # from keras.models import Sequential
@@ -62,11 +63,11 @@ class ClassifierTemplate(object):
 
     def build(self, model_parameters=None):
         """Build the model/graph."""
-        pass
+        raise NotImplementedError
 
     def train(self, train_data, train_labels, batch_size=50, num_epochs=5, additional_parameters=None):
         """Train the model on the training data."""
-        pass
+        raise NotImplementedError
 
     def evaluate(self, test_data, test_labels, additional_parameters=None):
         """Evaluate the model on the test data.
@@ -74,12 +75,42 @@ class ClassifierTemplate(object):
         returns:
         :accuracy: the model's accuracy classifying the test data.
         """
-
-        pass
+        raise NotImplementedError
 
     def predict(self, review):
         """Predict the sentiment of an unlabelled review.
 
         returns: the predicted label of :review:
         """
-        pass
+        raise NotImplementedError
+
+
+# noinspection PyAttributeOutsideInit
+class LSATextClassifier(ClassifierTemplate):
+
+    def __init__(self, embedding_matrix=None):
+        super().__init__(embedding_matrix)
+
+    def build(self, model_parameters=None):
+        """Build the model."""
+        self.vectorizer = TfidfVectorizer(max_df=0.5, max_features=10000, min_df=2, use_idf=True, stop_words='english')
+        self.lsa = make_pipeline(TruncatedSVD(100), Normalizer(copy=False))
+        self.model = LogisticRegression()
+
+    def train(self, train_data, train_labels, batch_size=50, num_epochs=5, additional_parameters=None):
+        """Train the model"""
+        train_tfidf = self.vectorizer.fit_transform(train_data)
+        train_lsa = self.lsa.fit_transform(train_tfidf)
+        self.model.fit(train_lsa, train_labels)
+
+    def evaluate(self, test_data, test_labels, additional_parameters=None):
+        test_tfidf = self.vectorizer.transform(test_data)
+        test_lsa = self.lsa.transform(test_tfidf)
+        return self.model.score(test_lsa, test_labels)
+
+    def predict(self, review):
+        review_tfidf = self.vectorizer.transform([review])
+        review_lsa = self.lsa.transform(review_tfidf)
+
+        return self.model.predict(review_lsa)
+
