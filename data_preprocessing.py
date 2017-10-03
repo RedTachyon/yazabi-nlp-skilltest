@@ -127,7 +127,21 @@ def load_embedding_matrix(filepath):
     returns:
     :embedding_matrix: a dictionary mapping words to word-vectors (embeddings).
     """
-    return gensim.models.word2vec.Word2Vec.load('filepath')
+    return gensim.models.word2vec.Word2Vec.load(filepath)
+
+
+def filter_tokens(tokens, stop):
+    """Removes stopwords from a tokens list"""
+    return list(filter(lambda x: x not in stop, tokens))
+
+
+def convert_tokens(tokens, embd, max_seq_length):
+    """Converts a list of tokens into a numpy array of fixed shape[1]"""
+    if len(tokens) >= max_seq_length:
+        return np.vstack(map(lambda x: embd[x], tokens[:max_seq_length]))
+    else:
+        words = np.vstack(list(map(lambda x: embd[x], tokens)))
+        return np.vstack([words, np.zeros((max_seq_length - words.shape[0], words.shape[1]))])
 
 
 def to_word_vectors(tokenized_samples, embedding_matrix, max_seq_length):
@@ -141,14 +155,26 @@ def to_word_vectors(tokenized_samples, embedding_matrix, max_seq_length):
     returns: a matrix containing the word-vectors of the samples with size:
     (num_samples, max_seq_length, word_vector_size).
     """
-    pass
+    return np.stack([convert_tokens(tokenized_samples[i], embedding_matrix, max_seq_length)
+                     for i in range(len(tokenized_samples))])
 
 
-def generate_batches(data, labels, batch_size, embedding_matrix=None):
+def generate_batches(data, labels, batch_size, embedding_matrix=None, max_seq_length=140):
     """"Generate batches of data and labels.
     Hint: tokenize
 
     returns: batch of data and labels. When an embedding_matrix is passed in,
     data is tokenized and returned as matrix of word vectors.
     """
-    yield batch_data, batch_labels
+    i = 0
+    b = batch_size
+    m = len(data)
+
+    while True:
+        low = int(b * (i % np.ceil(m / b)))
+        high = int(b * (i % np.ceil(m / b)) + b)
+        batch_data, batch_labels = data[low:high], labels[low:high]
+        if embedding_matrix is not None:
+            batch_data = to_word_vectors(batch_data, embedding_matrix, max_seq_length)
+        yield batch_data, batch_labels
+        i += 1
