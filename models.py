@@ -87,7 +87,7 @@ class ClassifierTemplate(object):
 
 
 class LSATextClassifier(ClassifierTemplate):
-
+    """Holds a Latent Semantic Analysis classifier with a logistic regression model"""
     def __init__(self, embedding_matrix=None):
         super().__init__(embedding_matrix)
         self._build()
@@ -115,3 +115,6 @@ class LSATextClassifier(ClassifierTemplate):
 
         return self.model.predict(review_lsa)
 
+
+class CNNTextClassifier(ClassifierTemplate):
+    pass

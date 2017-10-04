@@ -116,7 +116,7 @@ def make_embedding_matrix(texts, size):
     :embedding_matrix: a dictionary mapping words to word-vectors (embeddings).
     """
     token_texts = list(map(tokenize, texts))
-    model = gensim.models.word2vec.Word2Vec(sentences=token_train_data, size=size)
+    model = gensim.models.word2vec.Word2Vec(sentences=token_texts, size=size)
     return model
 
 
