@@ -29,14 +29,17 @@
 from __future__ import print_function
 from __future__ import generators
 from __future__ import division
-import os, sys
+import os
+import sys
+import random
 from tqdm import tqdm
 import numpy as np
 # useful packages
 import nltk
 import gensim
 import sklearn
-
+from nltk.corpus import stopwords
+stop = stopwords.words('english') + ['br']
 
 def load_imdb_data():
     """
@@ -116,7 +119,7 @@ def make_embedding_matrix(texts, size):
     :embedding_matrix: a dictionary mapping words to word-vectors (embeddings).
     """
     token_texts = list(map(tokenize, texts))
-    model = gensim.models.word2vec.Word2Vec(sentences=token_texts, size=size)
+    model = gensim.models.word2vec.Word2Vec(sentences=token_texts, size=size, min_count=1)
     return model
 
 
@@ -166,10 +169,18 @@ def generate_batches(data, labels, batch_size, embedding_matrix=None, max_seq_le
     returns: batch of data and labels. When an embedding_matrix is passed in,
     data is tokenized and returned as matrix of word vectors.
     """
+    
+    data, labels = shuffle_in_unison(data, labels)
     i = 0
     b = batch_size
     m = len(data)
-
+    
+    #for i in range(int(np.ceil(m/batch_size))):
+    #    batch_data, batch_labels = data[i*batch_size:(i+1)*batch_size], labels[i*batch_size:(i+1)*batch_size]
+    #    if embedding_matrix is not None:
+    #        batch_data = to_word_vectors(batch_data, embedding_matrix, max_seq_length)
+    #    yield batch_data, np.array(batch_labels)
+    
     while True:
         low = int(b * (i % np.ceil(m / b)))
         high = int(b * (i % np.ceil(m / b)) + b)
@@ -178,3 +189,18 @@ def generate_batches(data, labels, batch_size, embedding_matrix=None, max_seq_le
             batch_data = to_word_vectors(batch_data, embedding_matrix, max_seq_length)
         yield batch_data, batch_labels
         i += 1
+
+        
+def process_data(data):
+    """Converts raw reviews into list of lists of tokens."""
+    clean = clean_data(data)
+    tokens = list(map(tokenize, clean))
+    filtered = list(map(lambda x: filter_tokens(x, stop), tokens))
+    return filtered
+
+
+def shuffle_in_unison(*args):
+    """Shuffles the iterable arguments"""
+    temp = list(zip(*args))
+    random.shuffle(temp)
+    return list(map(lambda x: list(x), zip(*temp)))
