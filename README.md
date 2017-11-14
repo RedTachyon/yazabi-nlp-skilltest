@@ -11,3 +11,5 @@ or
 or
 
 ./execute.py TextRNN
+
+Keep in mind you need to have the aclImdb directory in the root of this project.
