@@ -62,29 +62,34 @@ if __name__ == "__main__":
         train_data, test_data = dp.clean_data(train_data), dp.clean_data(test_data)
         model = LSATextClassifier()
         model.train(train_data, train_labels)
+        accuracy = model.evaluate(test_data, test_labels)
 
     elif use_model == "TextRNN":
+        print("Generating the embedding matrix")
         embd_matrix = dp.make_embedding_matrix(train_data + test_data, size=EMBEDDING_SIZE)
         # embd_matrix = dp.load_embedding_matrix(FILENAME)
         train_tokens, test_tokens = dp.process_data(train_data), dp.process_data(test_data)
 
         model = RNNTextClassifier(embd_matrix)
         model.train(train_tokens, train_labels, BATCH_SIZE, NUM_EPOCHS)
+        loss, accuracy = model.evaluate(test_tokens, test_labels)
 
     elif use_model == 'TextCNN':
-        # embd_matrix = dp.make_embedding_matrix(train_data + test_data, size=EMBEDDING_SIZE)
-        embd_matrix = dp.load_embedding_matrix(FILENAME)
+        print("Generating the embedding matrix")
+        embd_matrix = dp.make_embedding_matrix(train_data + test_data, size=EMBEDDING_SIZE)
+        # embd_matrix = dp.load_embedding_matrix(FILENAME)
         train_tokens, test_tokens = dp.process_data(train_data), dp.process_data(test_data)
 
         model = CNNTextClassifier(embd_matrix)
         model.train(train_tokens, train_labels, num_epochs=1)
+        loss, accuracy = model.evaluate(test_tokens, test_labels)
+
 
     else:
         model = None
         raise ValueError("The model should be one of LSATextClassifier, TextRNN or TextCNN")
 
     # evaluate model
-    loss, accuracy = model.evaluate(test_tokens, test_labels)
     print('Test accuracy: ', accuracy)
 
     # predict

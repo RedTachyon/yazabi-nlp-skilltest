@@ -112,7 +112,6 @@ class LSATextClassifier(ClassifierTemplate):
     def predict(self, review):
         review_tfidf = self.vectorizer.transform([review])
         review_lsa = self.lsa.transform(review_tfidf)
-
         return self.model.predict(review_lsa)
 
 
