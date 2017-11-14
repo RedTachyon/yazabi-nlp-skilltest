@@ -84,7 +84,6 @@ if __name__ == "__main__":
         model.train(train_tokens, train_labels, num_epochs=1)
         loss, accuracy = model.evaluate(test_tokens, test_labels)
 
-
     else:
         model = None
         raise ValueError("The model should be one of LSATextClassifier, TextRNN or TextCNN")
@@ -100,6 +99,4 @@ if __name__ == "__main__":
     print('Prediction on negative review:', neg_pred)
     print('Prediction on positive review:', pos_pred)
 
-    custom_review = input("Enter your own review:\n")
-    print('Prediction on your review:', model.predict(custom_review))
 
