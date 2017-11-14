@@ -81,7 +81,7 @@ if __name__ == "__main__":
         train_tokens, test_tokens = dp.process_data(train_data), dp.process_data(test_data)
 
         model = CNNTextClassifier(embd_matrix)
-        model.train(train_tokens, train_labels, num_epochs=1)
+        model.train(train_tokens, train_labels, BATCH_SIZE, NUM_EPOCHS)
         loss, accuracy = model.evaluate(test_tokens, test_labels)
 
     else:
@@ -98,5 +98,3 @@ if __name__ == "__main__":
     pos_pred = model.predict(pos_review)
     print('Prediction on negative review:', neg_pred)
     print('Prediction on positive review:', pos_pred)
-
-
