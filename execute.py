@@ -72,19 +72,19 @@ if __name__ == "__main__":
         model.train(train_tokens, train_labels, BATCH_SIZE, NUM_EPOCHS)
 
     elif use_model == 'TextCNN':
-        embd_matrix = dp.make_embedding_matrix(train_data + test_data, size=EMBEDDING_SIZE)
-        # embd_matrix = dp.load_embedding_matrix(FILENAME)
+        # embd_matrix = dp.make_embedding_matrix(train_data + test_data, size=EMBEDDING_SIZE)
+        embd_matrix = dp.load_embedding_matrix(FILENAME)
         train_tokens, test_tokens = dp.process_data(train_data), dp.process_data(test_data)
 
         model = CNNTextClassifier(embd_matrix)
-        model.train(train_tokens, train_labels, BATCH_SIZE, NUM_EPOCHS)
+        model.train(train_tokens, train_labels, num_epochs=1)
 
     else:
         model = None
         raise ValueError("The model should be one of LSATextClassifier, TextRNN or TextCNN")
 
     # evaluate model
-    accuracy = model.evaluate(test_data, test_labels)
+    loss, accuracy = model.evaluate(test_tokens, test_labels)
     print('Test accuracy: ', accuracy)
 
     # predict

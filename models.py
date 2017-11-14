@@ -57,7 +57,7 @@ class ClassifierTemplate(object):
     Add arguments to the functions and add as many other functions/classes as you wish.
     """
 
-    def __init__(self, embedding_matrix=None, additional_parameters=None):
+    def __init__(self, embedding_matrix=None):
         """Initialize the classifier with an (optional) embedding_matrix
         and/or any other parameters."""
         self.embedding_matrix = embedding_matrix
@@ -67,11 +67,11 @@ class ClassifierTemplate(object):
         """Build the model/graph."""
         raise NotImplementedError
 
-    def train(self, train_data, train_labels, batch_size=50, num_epochs=5, additional_parameters=None):
+    def train(self, train_data, train_labels, batch_size=50, num_epochs=5):
         """Train the model on the training data."""
         raise NotImplementedError
 
-    def evaluate(self, test_data, test_labels, additional_parameters=None):
+    def evaluate(self, test_data, test_labels):
         """Evaluate the model on the test data.
 
         returns:
@@ -140,20 +140,21 @@ class CNNTextClassifier(ClassifierTemplate):
 
         self.model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 
-    def train(self, train_data, train_labels, batch_size=100, num_epochs=2, embd=None):
+    def train(self, train_data, train_labels, batch_size=100, num_epochs=2):
         data_generator = dp.generate_batches(train_data, train_labels, batch_size, self.embedding_matrix, 140)
 
         self.model.fit_generator(data_generator, len(train_data) // batch_size, epochs=num_epochs)
 
-    def evaluate(self, test_data, test_labels, batch_size=100, embd=None):
+    def evaluate(self, test_data, test_labels, batch_size=100):
         data_generator = dp.generate_batches(test_data, test_labels, batch_size, self.embedding_matrix, 140)
 
         return self.model.evaluate_generator(data_generator, len(test_data) // batch_size)
 
     def predict(self, review):
-        tokens = dp.process_data([review])[0]
+        tokens = dp.process_data([review])
+        vectorized = dp.to_word_vectors(tokens, self.embedding_matrix, 140)
 
-        return self.model.predict(tokens)
+        return self.model.predict(vectorized)
 
 
 class RNNTextClassifier(ClassifierTemplate):
@@ -178,17 +179,20 @@ class RNNTextClassifier(ClassifierTemplate):
         self.model.add(Dense(100, activation='relu'))
         self.model.add(Dense(1, activation='sigmoid'))
 
-    def train(self, train_data, train_labels, batch_size=100, num_epochs=2, embd=None):
+        self.model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+
+    def train(self, train_data, train_labels, batch_size=100, num_epochs=2):
         data_generator = dp.generate_batches(train_data, train_labels, batch_size, self.embedding_matrix, 140)
 
         self.model.fit_generator(data_generator, len(train_data) // batch_size, epochs=num_epochs)
 
-    def evaluate(self, test_data, test_labels, batch_size=100, embd=None):
+    def evaluate(self, test_data, test_labels, batch_size=100):
         data_generator = dp.generate_batches(test_data, test_labels, batch_size, self.embedding_matrix, 140)
 
         return self.model.evaluate_generator(data_generator, len(test_data) // batch_size)
 
     def predict(self, review):
-        tokens = dp.process_data([review])[0]
+        tokens = dp.process_data([review])
+        vectorized = dp.to_word_vectors(tokens, self.embedding_matrix, 140)
 
-        return self.model.predict(tokens)
+        return self.model.predict(vectorized)
