@@ -41,6 +41,7 @@ import sklearn
 from nltk.corpus import stopwords
 stop = stopwords.words('english') + ['br']
 
+
 def load_imdb_data():
     """
     Load the IMDB data.
@@ -187,7 +188,7 @@ def generate_batches(data, labels, batch_size, embedding_matrix=None, max_seq_le
         batch_data, batch_labels = data[low:high], labels[low:high]
         if embedding_matrix is not None:
             batch_data = to_word_vectors(batch_data, embedding_matrix, max_seq_length)
-        yield batch_data, batch_labels
+        yield batch_data, np.array(batch_labels)
         i += 1
 
         

@@ -43,8 +43,9 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import make_pipeline
 
 ## recommended for LSTMTextClassifier
-# from keras.models import Sequential
-# from keras.layers import Dense, Embedding, LSTM
+from keras.models import Sequential
+from keras.layers import Conv1D, Dense, GlobalMaxPooling1D, Dropout, BatchNormalization, LSTM
+
 
 class ClassifierTemplate(object):
     """Fill out this template to create three classes:
@@ -90,7 +91,6 @@ class LSATextClassifier(ClassifierTemplate):
     """Holds a Latent Semantic Analysis classifier with a logistic regression model"""
     def __init__(self, embedding_matrix=None):
         super().__init__(embedding_matrix)
-        self._build()
 
     def _build(self, model_parameters=None):
         """Build the model."""
@@ -117,4 +117,78 @@ class LSATextClassifier(ClassifierTemplate):
 
 
 class CNNTextClassifier(ClassifierTemplate):
-    pass
+    """Holds a CNN classifier"""
+
+    def __init__(self, embedding_matrix=None):
+        super().__init__(embedding_matrix)
+
+    def _build(self, model_parameters=None):
+        self.model = Sequential()
+        self.model.add(Conv1D(filters=256, kernel_size=3, padding='valid', input_shape=(140, 100)))
+        self.model.add(BatchNormalization())
+        self.model.add(Dropout(0.2))
+
+        self.model.add(Conv1D(filters=256, kernel_size=3, padding='valid'))
+        self.model.add(BatchNormalization())
+
+        self.model.add(GlobalMaxPooling1D())
+
+        self.model.add(Dense(256, activation='relu'))
+        self.model.add(Dropout(0.2))
+
+        self.model.add(Dense(1, activation='sigmoid'))
+
+        self.model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+
+    def train(self, train_data, train_labels, batch_size=100, num_epochs=2, embd=None):
+        data_generator = dp.generate_batches(train_data, train_labels, batch_size, self.embedding_matrix, 140)
+
+        self.model.fit_generator(data_generator, len(train_data) // batch_size, epochs=num_epochs)
+
+    def evaluate(self, test_data, test_labels, batch_size=100, embd=None):
+        data_generator = dp.generate_batches(test_data, test_labels, batch_size, self.embedding_matrix, 140)
+
+        return self.model.evaluate_generator(data_generator, len(test_data) // batch_size)
+
+    def predict(self, review):
+        tokens = dp.process_data([review])[0]
+
+        return self.model.predict(tokens)
+
+
+class RNNTextClassifier(ClassifierTemplate):
+    """Holds an LSTM classifier"""
+    def __init__(self, embedding_matrix=None):
+        super().__init__(embedding_matrix)
+
+    def _build(self, model_parameters=None):
+        self.model = Sequential()
+        self.model.add(LSTM(64, input_shape=(140, 100), return_sequences=True))
+        self.model.add(BatchNormalization())
+        self.model.add(Dropout(.2))
+
+        self.model.add(LSTM(64, return_sequences=True))
+        self.model.add(BatchNormalization())
+        self.model.add(Dropout(.2))
+
+        self.model.add(LSTM(32))
+        self.model.add(BatchNormalization())
+        self.model.add(Dropout(.2))
+
+        self.model.add(Dense(100, activation='relu'))
+        self.model.add(Dense(1, activation='sigmoid'))
+
+    def train(self, train_data, train_labels, batch_size=100, num_epochs=2, embd=None):
+        data_generator = dp.generate_batches(train_data, train_labels, batch_size, self.embedding_matrix, 140)
+
+        self.model.fit_generator(data_generator, len(train_data) // batch_size, epochs=num_epochs)
+
+    def evaluate(self, test_data, test_labels, batch_size=100, embd=None):
+        data_generator = dp.generate_batches(test_data, test_labels, batch_size, self.embedding_matrix, 140)
+
+        return self.model.evaluate_generator(data_generator, len(test_data) // batch_size)
+
+    def predict(self, review):
+        tokens = dp.process_data([review])[0]
+
+        return self.model.predict(tokens)

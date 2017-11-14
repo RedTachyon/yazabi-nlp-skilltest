@@ -35,14 +35,16 @@ from __future__ import division
 import sys
 import data_preprocessing as dp
 from models import LSATextClassifier
-# from models import CNNTextClassifier
-# from models import RNNTextClassifier
+from models import CNNTextClassifier
+from models import RNNTextClassifier
 
 LEARNING_RATE = 1e-4
-BATCH_SIZE = 32
-NUM_EPOCHS = 10
-MAX_SEQ_LENGTH = 1000
+BATCH_SIZE = 100
+NUM_EPOCHS = 2
+MAX_SEQ_LENGTH = 140
 N_FEATURES = 200
+EMBEDDING_SIZE = 100
+FILENAME = 'embeddings'
 
 if __name__ == "__main__":
 
@@ -53,32 +55,36 @@ if __name__ == "__main__":
 
     # load data
     print("Loading data (this might take ~4 minutes)")
-    X_train, X_test, y_train, y_test = dp.load_imdb_data()
-    X_train, X_test = dp.clean_data(X_train), dp.clean_data(X_test)
+    train_data, test_data, train_labels, test_labels = dp.load_imdb_data()
 
     # build and train model
     if use_model == 'LSATextClassifier':
+        train_data, test_data = dp.clean_data(train_data), dp.clean_data(test_data)
         model = LSATextClassifier()
-        model.train(X_train, y_train)
+        model.train(train_data, train_labels)
 
     elif use_model == "TextRNN":
-        embd_matrix = dp.make_embedding_matrix(X_train + X_test, size=EMBEDDING_SIZE)
+        embd_matrix = dp.make_embedding_matrix(train_data + test_data, size=EMBEDDING_SIZE)
         # embd_matrix = dp.load_embedding_matrix(FILENAME)
-        model = RNNTextClassifier()
-        model.train(X_train, y_train, BATCH_SIZE, NUM_EPOCHS)
+        train_tokens, test_tokens = dp.process_data(train_data), dp.process_data(test_data)
+
+        model = RNNTextClassifier(embd_matrix)
+        model.train(train_tokens, train_labels, BATCH_SIZE, NUM_EPOCHS)
 
     elif use_model == 'TextCNN':
-        embd_matrix = dp.make_embedding_matrix(X_train + X_test, size=EMBEDDING_SIZE)
+        embd_matrix = dp.make_embedding_matrix(train_data + test_data, size=EMBEDDING_SIZE)
         # embd_matrix = dp.load_embedding_matrix(FILENAME)
-        model = CNNTextClassifier()
-        model.train(X_train, y_train, BATCH_SIZE, NUM_EPOCHS)
+        train_tokens, test_tokens = dp.process_data(train_data), dp.process_data(test_data)
+
+        model = CNNTextClassifier(embd_matrix)
+        model.train(train_tokens, train_labels, BATCH_SIZE, NUM_EPOCHS)
 
     else:
         model = None
         raise ValueError("The model should be one of LSATextClassifier, TextRNN or TextCNN")
 
     # evaluate model
-    accuracy = model.evaluate(X_test, y_test)
+    accuracy = model.evaluate(test_data, test_labels)
     print('Test accuracy: ', accuracy)
 
     # predict
@@ -88,3 +94,7 @@ if __name__ == "__main__":
     pos_pred = model.predict(pos_review)
     print('Prediction on negative review:', neg_pred)
     print('Prediction on positive review:', pos_pred)
+
+    custom_review = input("Enter your own review:\n")
+    print('Prediction on your review:', model.predict(custom_review))
+
